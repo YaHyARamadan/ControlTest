@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نظام الكنترول المدرسي</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6fb;--card:#fff;--tx:#1b2440;--mut:#6b7590;--pri:#1f4fd8;--bd:#dfe4f0;--ok:#168a4a;--bad:#c62f3a;--hd:#eaf0ff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#12161f;--card:#1b2130;--tx:#e8ecf7;--mut:#9aa5c0;--pri:#6d93ff;--bd:#2b3347;--ok:#4cc380;--bad:#ff7b84;--hd:#222b42}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:var(--pri);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1}
+header span{font-size:13px;opacity:.9}
+nav{display:flex;gap:6px;padding:10px 20px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--bd)}
+nav button{white-space:nowrap}
+main{padding:20px;max-width:1100px;margin:auto}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:8px 14px;border-radius:8px}
+button.p{background:var(--pri);color:#fff;border-color:var(--pri)}
+button.on{background:var(--hd);border-color:var(--pri)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px}
+.card h3{margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar .sp{flex:1}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{padding:8px;border-bottom:1px solid var(--bd);text-align:center;font-size:14px}
+th{background:var(--hd)}
+td.n{text-align:right;white-space:nowrap}
+td input{width:58px;padding:5px;text-align:center;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font:inherit}
+.ok{color:var(--ok);font-weight:bold}.bad{color:var(--bad);font-weight:bold}
+.mut{color:var(--mut);font-size:13px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1b2440;color:#fff;padding:10px 18px;border-radius:8px;display:none;z-index:9}
+#cert{background:#fff;color:#111;border:6px double #1f4fd8;padding:28px;max-width:760px;margin:auto}
+#cert h2{text-align:center;margin:4px 0}
+.logo{width:70px;height:70px;border-radius:50%;border:2px solid #1f4fd8;display:flex;align-items:center;justify-content:center;font-size:34px;margin:auto}
+#cert table{min-width:0}#cert th{background:#eaf0ff;color:#111}#cert td,#cert th{border:1px solid #bbb}
+.sig{display:flex;justify-content:space-between;margin-top:36px;text-align:center}
+.stamp{width:110px;height:110px;border:2px dashed #999;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px}
+@media print{header,nav,.bar,#toast{display:none!important}body{background:#fff}main{padding:0}}
+</style>
+</head>
+<body>
+<header><h1>🏫 مدرسة النموذج — نظام الكنترول</h1><span>نسخة تجريبية للعرض • الدور: مسؤول الكنترول</span></header>
+<nav id="nav"></nav>
+<main id="app"></main>
+<div id="toast"></div>
+<script>
+const ST={
+p:{n:'المرحلة الابتدائية',ic:'🎒',g:['الصف الأول','الصف الثاني','الصف الثالث','الصف الرابع','الصف الخامس','الصف السادس'],s:['اللغة العربية','الرياضيات','اللغة الإنجليزية','العلوم','الدراسات']},
+m:{n:'المرحلة الإعدادية',ic:'📘',g:['الأول الإعدادي','الثاني الإعدادي','الثالث الإعدادي'],s:['اللغة العربية','الرياضيات','اللغة الإنجليزية','العلوم','الدراسات','الحاسب']},
+h:{n:'المرحلة الثانوية',ic:'🎓',g:['الأول الثانوي','الثاني الثانوي','الثالث الثانوي'],s:['اللغة العربية','اللغة الإنجليزية','الرياضيات','الفيزياء','الكيمياء','الأحياء']}};
+const NAMES=['أحمد محمد علي','محمود حسن إبراهيم','يوسف خالد سعيد','مريم عبد الله أحمد','فاطمة السيد محمود','عمر طارق حسين','سارة إيهاب مصطفى','آية رمضان عبد الرحمن','كريم ياسر فتحي','نور الدين وائل'];
+const MAX=50,PRINCIPAL='أ/ محمد أحمد عبد العزيز';
+let cur={st:null,gi:null},view='home',sid=0,D={};
+function seed(k){let x=0;for(const c of k)x=(x*31+c.charCodeAt(0))%9973;return()=>{x=(x*1103+12345)%9973;return x/9973}}
+function cls(){const k=cur.st+'-'+cur.gi;if(!D[k]){try{const s=localStorage.getItem('ctl'+k);if(s)D[k]=JSON.parse(s)}catch(e){}}
+if(!D[k]){const r=seed(k),n=ST[cur.st].s.length;D[k]=NAMES.map(nm=>({nm,g:Array.from({length:n},()=>Math.round(22+r()*28))}))}return D[k]}
+function tot(s){const t=s.g.reduce((a,b)=>a+b,0),m=s.g.length*MAX;return{t,m,p:(t/m*100).toFixed(1),ok:s.g.every(x=>x>=MAX/2)}}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2200)}
+function go(v,st,gi){view=v;if(st!==undefined){cur.st=st;cur.gi=gi}render()}
+function nav(){const a=[['home','🏠 الرئيسية'],['grades','📝 رصد الدرجات'],['results','📊 النتائج'],['cert','🖨️ الشهادة']];
+document.getElementById('nav').innerHTML=a.map(([v,t])=>`<button class="${view===v?'on':''}" onclick="${cur.st||v==='home'?`go('${v}')`:`toast('اختر الصف أولاً من الرئيسية')`}">${t}</button>`).join('')}
+function picker(){return `<div class="bar"><b>${ST[cur.st].n} — ${ST[cur.st].g[cur.gi]}</b><span class="sp"></span><button onclick="go('home')">تغيير الصف</button></div>`}
+function render(){nav();const A=document.getElementById('app');
+if(view==='home'){A.innerHTML='<div class="grid">'+Object.entries(ST).map(([k,s])=>`<div class="card"><h3>${s.ic} ${s.n}</h3><div class="chips">${s.g.map((g,i)=>`<button onclick="go('grades','${k}',${i})">${g}</button>`).join('')}</div></div>`).join('')+'</div><p class="mut">اختر الصف لفتح كشف الكنترول. البيانات الظاهرة تجريبية.</p>'}
+else if(view==='grades'){const c=cls(),S=ST[cur.st].s;
+A.innerHTML=picker()+`<div class="bar"><button class="p" onclick="save()">💾 حفظ</button><button onclick="try{window.print()}catch(e){toast('الطباعة غير متاحة هنا')}">📄 تصدير PDF</button><button onclick="toast('تصدير Excel سيتوفر في النسخة النهائية')">📗 تصدير Excel</button><span class="mut">الدرجة العظمى لكل مادة: ${MAX}</span></div><div class="wrap"><table><thead><tr><th>#</th><th>اسم الطالب</th>${S.map(s=>`<th>${s}<br><span class="mut">/${MAX}</span></th>`).join('')}<th>المجموع</th><th>النسبة</th><th>النتيجة</th></tr></thead><tbody>${c.map((s,i)=>{const t=tot(s);return `<tr><td>${i+1}</td><td class="n">${s.nm}</td>${s.g.map((g,j)=>`<td><input type="number" min="0" max="${MAX}" value="${g}" oninput="setG(${i},${j},this)"></td>`).join('')}<td id="t${i}">${t.t}</td><td id="p${i}">${t.p}%</td><td id="r${i}" class="${t.ok?'ok':'bad'}">${t.ok?'ناجح':'دور ثان'}</td></tr>`}).join('')}</tbody></table></div>`}
+else if(view==='results'){A.innerHTML=picker()+'<div class="grid">'+cls().map((s,i)=>{const t=tot(s);return `<div class="card"><h3>${s.nm}</h3><div class="mut">المجموع ${t.t} من ${t.m} • ${t.p}%</div><p class="${t.ok?'ok':'bad'}">${t.ok?'ناجح':'دور ثان'}</p><button onclick="sid=${i};go('cert')">عرض الشهادة</button></div>`}).join('')+'</div>'}
+else{const c=cls(),s=c[sid],t=tot(s),S=ST[cur.st].s;
+A.innerHTML=picker()+`<div class="bar"><select onchange="sid=+this.value;render()" style="font:inherit;padding:8px">${c.map((x,i)=>`<option value="${i}" ${i===sid?'selected':''}>${x.nm}</option>`).join('')}</select><button class="p" onclick="try{window.print()}catch(e){toast('الطباعة غير متاحة هنا')}">🖨️ طباعة الشهادة</button></div>
+<div id="cert"><div class="logo">🏫</div><h2>مدرسة النموذج</h2><div style="text-align:center">شهادة نتيجة العام الدراسي 2026 / 2027</div><p><b>اسم الطالب:</b> ${s.nm}<br><b>المرحلة:</b> ${ST[cur.st].n} &nbsp; <b>الصف:</b> ${ST[cur.st].g[cur.gi]}</p><table><thead><tr><th>المادة</th><th>الدرجة العظمى</th><th>الدرجة المستحقة</th></tr></thead><tbody>${S.map((m,j)=>`<tr><td>${m}</td><td>${MAX}</td><td>${s.g[j]}</td></tr>`).join('')}<tr><th>المجموع</th><th>${t.m}</th><th>${t.t}</th></tr></tbody></table><p><b>النسبة المئوية:</b> ${t.p}% &nbsp; <b>النتيجة:</b> ${t.ok?'ناجح':'دور ثان'}</p><div class="sig"><div>مسؤول الكنترول<br><br>..........</div><div class="stamp">مكان الختم</div><div>مدير المدرسة<br>${PRINCIPAL}</div></div></div>`}}
+function setG(i,j,el){let v=Math.max(0,Math.min(MAX,+el.value||0));if(+el.value>MAX)el.value=v;const s=cls()[i];s.g[j]=v;const t=tot(s);
+document.getElementById('t'+i).textContent=t.t;document.getElementById('p'+i).textContent=t.p+'%';const r=document.getElementById('r'+i);r.textContent=t.ok?'ناجح':'دور ثان';r.className=t.ok?'ok':'bad'}
+function save(){try{localStorage.setItem('ctl'+cur.st+'-'+cur.gi,JSON.stringify(cls()))}catch(e){}toast('تم حفظ الدرجات ✓')}
+render();
+</script>
+</body>
+</html>
